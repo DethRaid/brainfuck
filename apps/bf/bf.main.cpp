@@ -2,7 +2,9 @@
 //!
 //! This file provides a command-line interface to the Brainfuck interpreter
 
-#include "iostream"
+#include <iostream>
+
+#include "error_codes.hpp"
 
 /*!
  * \brief Entry point for my Brainfuck interpreter
@@ -16,15 +18,15 @@
 int main(const char** argc, const int argv) {
 	try {
 		if(argv != 1) {
-
+			std::cerr << "bf only accepts a single argument: the name of the file to interpret\n";
+			return BF_ERR_TOO_MANY_ARGUMENTS;
 		}
 
 		std::cout << "Hello World!\n";
 
 		return 0;
 
-	}
-	catch (...) {
-		return 1;
+	} catch(...) {
+		return BF_ERR_UNKNOWN;
 	}
 }
