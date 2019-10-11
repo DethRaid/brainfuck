@@ -124,9 +124,16 @@ int main(const char** argc, const int argv) {
 			return BF_ERR_WRONG_ARGUMENTS;
 		}
 
-		std::ifstream file_stream(argc[0]);
+		auto* token_stream = [&] () -> std::istream* {
+			if(argv == 0) {
+				return new std::ifstream(argc[0]);
+				
+			} else {
+				return &std::cin;
+			}
+		}();
 
-		const auto valid_program = interpret(file_stream, MIN_TAPE_SIZE, std::cin, std::cout);
+		const auto valid_program = interpret(*token_stream, MIN_TAPE_SIZE, std::cin, std::cout);
 		if (!valid_program) {
 			std::cout << "Program " << argc[0] << " is invalid";
 
