@@ -17,6 +17,9 @@
  */
 constexpr auto MIN_TAPE_SIZE = 32768u;
 
+//! \brief How many tokens to read at once
+constexpr auto TOKEN_CACHE_SIZE = 8192u;
+
 /*
  * Error codes that bf might return
  */
@@ -38,18 +41,21 @@ constexpr auto BF_ERR_INVALID_PROGRAM = -0x11;
  * \param bstdin Standard input stream that the program will read from
  * \param bstdout Standard output stream that the program will write to
  */
-bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istream& bstdin, std::ostream& bstdout) {
+bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istream& bstdin, std::ostream& bstdout) {	
 	const uint32_t real_tape_size = std::min(tape_size, MIN_TAPE_SIZE);
 	const auto tape = std::make_unique<char*>(new char[real_tape_size]);
+	std::memset(*tape, 0, real_tape_size);
 	
 	auto* tape_ptr = *tape;
 	auto tape_idx = 0;
 	auto loop_start = token_stream.tellg();
 
 	while (token_stream.good()) {
-		const char token = token_stream.get();
+		const auto token = token_stream.get();
 
-		switch (token) {
+		// Intentionally no `default` case because in Brainfuck anything that isn't a known token is ignored
+		// ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
+		switch (token) {  // NOLINT(hicpp-multiway-paths-covered)
 		case '<':
 			tape_idx = (tape_idx + 1) % MIN_TAPE_SIZE;
 			break;
@@ -75,13 +81,21 @@ bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istre
 			break;
 
 		case '[':
-			loop_start = token_stream.tellg();
+			if (tape_ptr[tape_idx]) {
+				loop_start = token_stream.tellg();
+				
+			} else {
+				// Skip to the ]
+				while (token_stream.get() != ']')
+				{}
+
+				// Go past the ]
+				token_stream.get();
+			}
 			break;
 
 		case ']':
-			if (tape_ptr[tape_idx]) {
 				token_stream.seekg(loop_start);
-			}
 			break;
 		}
 	}
