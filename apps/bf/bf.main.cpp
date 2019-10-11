@@ -15,11 +15,10 @@
  */
 int main(const char** argc, const int argv) {
 	try {
-		if(argv != 0)
-		{
-			
+		if(argv != 1) {
+
 		}
-		
+
 		std::cout << "Hello World!\n";
 
 		return 0;
