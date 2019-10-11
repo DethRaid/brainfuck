@@ -83,10 +83,6 @@ bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istre
 				token_stream.seekg(loop_start);
 			}
 			break;
-
-		default:
-			std::cerr << "Invalid token `" << token << "`\n";
-			return false;
 		}
 	}
 
