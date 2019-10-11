@@ -119,15 +119,15 @@ void print_help() {
  */
 int main(int argc, const char** argv) {
 	try {
-		if (argv > 1) {
+		if (argc > 1) {
 			std::cerr << "Incorrect arguments. Printing help page...\n";
 			print_help();
 			return BF_ERR_WRONG_ARGUMENTS;
 		}
 
 		auto* token_stream = [&] () -> std::istream* {
-			if(argv == 0) {
-				return new std::ifstream(argc[0]);
+			if(argc == 0) {
+				return new std::ifstream(argv[0]);
 				
 			} else {
 				return &std::cin;
@@ -136,7 +136,7 @@ int main(int argc, const char** argv) {
 
 		const auto valid_program = interpret(*token_stream, MIN_TAPE_SIZE, std::cin, std::cout);
 		if (!valid_program) {
-			std::cout << "Program " << argc[0] << " is invalid";
+			std::cout << "Program " << argv[0] << " is invalid";
 
 			return BF_ERR_INVALID_PROGRAM;
 		}
