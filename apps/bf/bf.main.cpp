@@ -103,7 +103,7 @@ void print_help() {
  * - filename: Name of the brainfuck file to interpret. May have any extension of reside on any drive accessible
  * through the current filesystem
  */
-int main(const char** argc, const int argv) {
+int main(int argc, const char** argv) {
 	try {
 		if (argv > 1) {
 			std::cerr << "Incorrect arguments. Printing help page...\n";
