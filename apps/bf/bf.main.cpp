@@ -6,9 +6,27 @@
 #include <fstream>
 #include <algorithm>
 
-#include "error_codes.hpp"
+/*
+ * Configuration parameters
+ */
 
+/*!
+ * \brief Minimum size of the tape that bf provides to the program
+ *
+ * Must be at least 30,000 to conform to the Brainfuck spec
+ */
 constexpr auto MIN_TAPE_SIZE = 32768u;
+
+/*
+ * Error codes that bf might return
+ */
+
+//! \brief Unknown error because something threw an exception
+constexpr auto BF_ERR_UNKNOWN = -0x01;
+
+//! \brief You provided bad arguments to br
+constexpr auto BF_ERR_WRONG_ARGUMENTS = -0x10;
+constexpr auto BF_ERR_INVALID_PROGRAM = -0x11;
 
 /*!
  * \brief Interprets a stream of Brainfuck instructions
@@ -75,6 +93,10 @@ bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istre
 	return true;
 }
 
+void print_help() {
+	std::cerr << "bf\n\nInterprets a Brainfuck program from standard inputs\n\nbf <filename>\n\nInterprets a Brainfuck program from a file\n\nParameters:\n\n* filename: Filepath to the file to interpret Brainfuck from\n";
+}
+
 /*!
  * \brief Entry point for my Brainfuck interpreter
  *
@@ -87,13 +109,14 @@ bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istre
 int main(const char** argc, const int argv) {
 	try {
 		if (argv != 1) {
-			std::cerr << "bf only accepts a single argument: the name of the file to interpret\n";
-			return BF_ERR_TOO_MANY_ARGUMENTS;
+			std::cerr << "Incorrect arguments. Printing help page...\n";
+			print_help();
+			return BF_ERR_WRONG_ARGUMENTS;
 		}
 
 		std::ifstream file_stream(argc[0]);
 
-		const auto valid_program = interpret(file_stream, 0, std::cin, std::cout);
+		const auto valid_program = interpret(file_stream, MIN_TAPE_SIZE, std::cin, std::cout);
 		if (!valid_program) {
 			std::cout << "Program " << argc[0] << " is invalid";
 
