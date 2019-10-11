@@ -7,6 +7,9 @@
 #include <algorithm>
 #include <memory>
 #include <cstring>
+#include <string>
+#include <sstream>
+#include <stack>
 
 /*
  * Configuration parameters
@@ -17,7 +20,7 @@
   *
   * Must be at least 30,000 to conform to the Brainfuck spec
   */
-constexpr auto MIN_TAPE_SIZE = 32768u;
+constexpr uint64_t MIN_TAPE_SIZE = 32768u;
 
 /*
  * Error codes that bf might return
@@ -40,27 +43,28 @@ constexpr auto BF_ERR_INVALID_PROGRAM = -0x11;
  * \param bstdin Standard input stream that the program will read from
  * \param bstdout Standard output stream that the program will write to
  */
-bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istream& bstdin, std::ostream& bstdout) {
-	const uint32_t real_tape_size = std::min(tape_size, MIN_TAPE_SIZE);
+bool interpret(const std::string& token_stream, const uint64_t& tape_size, std::istream& bstdin, std::ostream& bstdout) {
+	const auto real_tape_size = std::min(tape_size, MIN_TAPE_SIZE);
 	const auto tape = std::make_unique<char*>(new char[real_tape_size]);
 	std::memset(*tape, 0, real_tape_size);
 
 	auto* tape_ptr = *tape;
-	auto tape_idx = 0;
+	auto tape_idx = 0u;
 
-	auto loop_start = token_stream.tellg();
+	auto read_idx = 0u;
+	auto loop_start_idx = std::stack<uint64_t>{};
 
-	while (token_stream.good()) {
-		const auto token = token_stream.get();
+	while (read_idx < token_stream.size()) {
+		const char token = token_stream[read_idx];
 
 		// Intentionally no `default` case because in Brainfuck anything that isn't a known token is ignored
 		// ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
 		switch (token) {  // NOLINT(hicpp-multiway-paths-covered)
-		case '<':
-			tape_idx = (tape_idx + 1) % MIN_TAPE_SIZE;
+		case '>':
+			tape_idx = static_cast<uint64_t>(tape_idx + 1) % MIN_TAPE_SIZE;
 			break;
 
-		case '>':
+		case '<':
 			tape_idx = (tape_idx - 1) % MIN_TAPE_SIZE;
 			break;
 
@@ -83,16 +87,19 @@ bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istre
 		case '[':
 		{
 			if (tape_ptr[tape_idx]) {
-				loop_start = token_stream.tellg();
+				loop_start_idx.push(read_idx);
 
 			}
 			else {
-				auto loop_depth = 1u;
-
 				// Skip to the ]
+								
+				auto loop_depth = 1u;
 				auto skip_token = token;	// Initialize it to get the type
+				
 				do {
-					skip_token = token_stream.get();
+					read_idx++;
+					
+					skip_token = token_stream[read_idx];
 
 					if (skip_token == ']') {
 						loop_depth--;
@@ -106,9 +113,13 @@ bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istre
 		break;
 
 		case ']':
-			token_stream.seekg(loop_start);
+			// We increment the read idx after this line, so I have to decrement it here to get correct results
+			read_idx = loop_start_idx.top() - 1;
+			loop_start_idx.pop();
 			break;
 		}
+
+		read_idx++;
 	}
 
 	return true;
@@ -129,7 +140,7 @@ void print_help() {
  */
 int main(int argc, const char** argv) {
 	try {
-		if (argc > 3) {
+		if (argc > 2) {
 			std::cerr << "Incorrect arguments. Printing help page...\n";
 			print_help();
 			return BF_ERR_WRONG_ARGUMENTS;
@@ -145,7 +156,19 @@ int main(int argc, const char** argv) {
 			}
 		}();
 
-		const auto valid_program = interpret(*token_stream, MIN_TAPE_SIZE, std::cin, std::cout);
+		const std::string tokens = [&] {
+			std::string _tokens;
+
+			token_stream->seekg(0, std::ios::end);
+			_tokens.reserve(token_stream->tellg());
+			token_stream->seekg(0, std::ios::beg);
+
+			_tokens.assign((std::istreambuf_iterator<char>(*token_stream)), std::istreambuf_iterator<char>());
+
+			return _tokens;
+		}();
+
+		const auto valid_program = interpret(tokens, MIN_TAPE_SIZE, std::cin, std::cout);
 		if (!valid_program) {
 			std::cout << "Program " << argv[0] << " is invalid";
 
