@@ -104,7 +104,7 @@ void print_help() {
  */
 int main(const char** argc, const int argv) {
 	try {
-		if (argv != 1) {
+		if (argv > 1) {
 			std::cerr << "Incorrect arguments. Printing help page...\n";
 			print_help();
 			return BF_ERR_WRONG_ARGUMENTS;
