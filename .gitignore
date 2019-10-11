@@ -391,3 +391,6 @@ MigrationBackup/
 *.vcproj
 *.vcxproj
 *.sln
+
+[mM]akefile
+*.make
