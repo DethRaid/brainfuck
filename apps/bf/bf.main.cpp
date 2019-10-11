@@ -6,26 +6,24 @@
 #include <fstream>
 #include <algorithm>
 #include <memory>
+#include <cstring>
 
 /*
  * Configuration parameters
  */
 
-/*!
- * \brief Minimum size of the tape that bf provides to the program
- *
- * Must be at least 30,000 to conform to the Brainfuck spec
- */
+ /*!
+  * \brief Minimum size of the tape that bf provides to the program
+  *
+  * Must be at least 30,000 to conform to the Brainfuck spec
+  */
 constexpr auto MIN_TAPE_SIZE = 32768u;
-
-//! \brief How many tokens to read at once
-constexpr auto TOKEN_CACHE_SIZE = 8192u;
 
 /*
  * Error codes that bf might return
  */
 
-//! \brief Unknown error because something threw an exception
+ //! \brief Unknown error because something threw an exception
 constexpr auto BF_ERR_UNKNOWN = -0x01;
 
 //! \brief You provided bad arguments to br
@@ -42,13 +40,14 @@ constexpr auto BF_ERR_INVALID_PROGRAM = -0x11;
  * \param bstdin Standard input stream that the program will read from
  * \param bstdout Standard output stream that the program will write to
  */
-bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istream& bstdin, std::ostream& bstdout) {	
+bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istream& bstdin, std::ostream& bstdout) {
 	const uint32_t real_tape_size = std::min(tape_size, MIN_TAPE_SIZE);
 	const auto tape = std::make_unique<char*>(new char[real_tape_size]);
 	std::memset(*tape, 0, real_tape_size);
-	
+
 	auto* tape_ptr = *tape;
 	auto tape_idx = 0;
+
 	auto loop_start = token_stream.tellg();
 
 	while (token_stream.good()) {
@@ -82,21 +81,32 @@ bool interpret(std::istream& token_stream, const uint32_t& tape_size, std::istre
 			break;
 
 		case '[':
+		{
 			if (tape_ptr[tape_idx]) {
 				loop_start = token_stream.tellg();
-				
-			} else {
-				// Skip to the ]
-				while (token_stream.get() != ']')
-				{}
 
-				// Go past the ]
-				token_stream.get();
 			}
-			break;
+			else {
+				auto loop_depth = 1u;
+
+				// Skip to the ]
+				auto skip_token = token;	// Initialize it to get the type
+				do {
+					skip_token = token_stream.get();
+
+					if (skip_token == ']') {
+						loop_depth--;
+					}
+					else if (skip_token == '[') {
+						loop_depth++;
+					}
+				} while (loop_depth != 0);
+			}
+		}
+		break;
 
 		case ']':
-				token_stream.seekg(loop_start);
+			token_stream.seekg(loop_start);
 			break;
 		}
 	}
@@ -119,17 +129,18 @@ void print_help() {
  */
 int main(int argc, const char** argv) {
 	try {
-		if (argc > 1) {
+		if (argc > 3) {
 			std::cerr << "Incorrect arguments. Printing help page...\n";
 			print_help();
 			return BF_ERR_WRONG_ARGUMENTS;
 		}
 
-		auto* token_stream = [&] () -> std::istream* {
-			if(argc == 0) {
-				return new std::ifstream(argv[0]);
-				
-			} else {
+		auto* token_stream = [&]() -> std::istream* {
+			if (argc == 2) {
+				return new std::ifstream(argv[1]);
+
+			}
+			else {
 				return &std::cin;
 			}
 		}();
