@@ -18,8 +18,8 @@ namespace bf::opt {
 	};
 
 	struct Instruction {
-		uint8_t data;
-		InstructionType type;
+		uint8_t data = 0;
+		InstructionType type = InstructionType::InstructionCount;
 	};
 
 	static_assert(sizeof(Instruction) == 2);

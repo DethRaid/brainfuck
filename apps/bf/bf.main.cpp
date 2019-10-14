@@ -306,15 +306,15 @@ int main(int argc, char** argv) {
 
 		std::string tokens = [&] {
 			if (token_stream->good()) {
-				std::string _tokens;
+				std::string l_tokens;
 
 				token_stream->seekg(0, std::ios::end);
-				_tokens.reserve(token_stream->tellg());
+				l_tokens.reserve(token_stream->tellg());
 				token_stream->seekg(0, std::ios::beg);
 
-				_tokens.assign((std::istreambuf_iterator<char>(*token_stream)), std::istreambuf_iterator<char>());
+				l_tokens.assign((std::istreambuf_iterator<char>(*token_stream)), std::istreambuf_iterator<char>());
 
-				return _tokens;
+				return l_tokens;
 			}
 			else {
 				std::cerr << "Could not open Brainfuck file " << argv[1] << "\n";

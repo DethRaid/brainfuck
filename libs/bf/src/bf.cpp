@@ -4,7 +4,6 @@
 	case (instruction_type):						\
 	if (write_itr->type == (instruction_type)) {	\
 		write_itr->data++;							\
-		++read_itr;									\
 	}												\
 	else{											\
 		++write_itr;								\
@@ -13,11 +12,11 @@
 	}												\
 	break;
 
-#define PASSTHROUGH_CASE(instruction_type)	\
-	case (instruction_type):				\
-		*write_itr = *read_itr;				\
-		++read_itr;							\
-		++write_itr;						\
+#define PASSTHROUGH_CASE(instruction_type)		\
+	case (instruction_type):					\
+		++write_itr;							\
+		write_itr->type = (instruction_type);	\
+		write_itr->data = 0;					\
 	break;
 
 
@@ -40,12 +39,16 @@ namespace bf::opt {
 				PASSTHROUGH_CASE(InstructionType::Read);
 				PASSTHROUGH_CASE(InstructionType::BeginLoop);
 				PASSTHROUGH_CASE(InstructionType::EndLoop);
-				
+
 				PASSTHROUGH_CASE(InstructionType::InstructionCount);
 
 			default:;
 			}
+
+			++read_itr;
 		}
+
+		optimized_instructions.erase(++write_itr);
 
 		return optimized_instructions;
 	}
