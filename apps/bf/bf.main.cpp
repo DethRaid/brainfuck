@@ -269,9 +269,16 @@ int main(int argc, char** argv) {
 		const InputParser input(argc, argv);
 
 		const auto tape_size = [&]() -> uint64_t {
-			if (input.cmd_option_exists("-t")) {
+			if (input.cmd_option_exists("-t")) {				
 				const auto& tape_size_str = input.get_cmd_option("-t");
-				return std::stoll(tape_size_str);
+
+				if(!tape_size_str.empty() && std::isdigit(tape_size_str[0])) {
+					return std::stoll(tape_size_str);
+				}
+				else {
+					std::cout << "You must pass in a positive number for the tape size\n";
+					return bf::MIN_TAPE_SIZE;
+				}
 			}
 			else {
 				return bf::MIN_TAPE_SIZE;
@@ -325,7 +332,9 @@ int main(int argc, char** argv) {
 				const auto& remove_itr = std::remove_if(tokens.begin(), tokens.end(), [](const auto token) { return !bf::is_valid(token); });
 				std::transform(tokens.begin(), remove_itr, std::back_inserter(instructions), bf::opt::parse_token);
 
-				return bf::interpret(instructions, tape_size, std::cin, std::cout);
+				const auto& optimized_instructions = optimize_instructions(instructions);
+
+				return bf::interpret(optimized_instructions, tape_size, std::cin, std::cout);
 			}
 			else {
 				return bf::interpret(tokens, tape_size, std::cin, std::cout);
