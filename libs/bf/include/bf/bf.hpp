@@ -12,7 +12,8 @@ namespace bf::opt {
 		Print,
 		Read,
 		BeginLoop,
-		EndLoop
+		EndLoop,
+		InstructionCount,
 	};
 
 	struct Instruction {
@@ -23,7 +24,8 @@ namespace bf::opt {
 	static_assert(sizeof(Instruction) == 2);
 
 	inline Instruction parse_token(const char token) {
-		switch (token) {
+		// ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
+		switch (token) {  // NOLINT(hicpp-multiway-paths-covered)
 		case '>':
 			return Instruction{
 				1,
@@ -71,10 +73,6 @@ namespace bf::opt {
 				0,
 				InstructionType::EndLoop
 			};
-
-		default:
-			std::cerr << "Could not parse token '" << token << ";\n";
-			return {};
 		}
 	}
 }

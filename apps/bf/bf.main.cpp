@@ -60,8 +60,10 @@ namespace bf {
 	 //! \brief Unknown error because something threw an exception
 	constexpr auto ERR_UNKNOWN = -0x01;
 
-	//! \brief You provided bad arguments to br
+	//! \brief You provided bad arguments to bf
 	constexpr auto ERR_WRONG_ARGUMENTS = -0x10;
+
+	//! \brief The input brainfuck program is malformed
 	constexpr auto ERR_INVALID_PROGRAM = -0x11;
 
 	/*!
@@ -156,7 +158,7 @@ namespace bf {
 		return true;
 	}
 
-	[[nodiscard]] bool interpret(const std::vector<bf::opt::Instruction>& instructions, const uint64_t& tape_size, std::istream& bstdin, std::ostream& bstdout) {
+	[[nodiscard]] bool interpret(const std::vector<opt::Instruction>& instructions, const uint64_t& tape_size, std::istream& bstdin, std::ostream& bstdout) {
 		const auto real_tape_size = std::min(tape_size, MIN_TAPE_SIZE);
 		const auto tape = std::make_unique<char*>(new char[real_tape_size]);
 		std::memset(*tape, 0, real_tape_size);
@@ -173,31 +175,31 @@ namespace bf {
 			// Intentionally no `default` case because in Brainfuck anything that isn't a known token is ignored
 			// ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
 			switch (instruction.type) {  // NOLINT(hicpp-multiway-paths-covered)
-			case bf::opt::InstructionType::AddPtr:
+			case opt::InstructionType::AddPtr:
 				tape_idx = static_cast<uint64_t>(instruction.data + tape_idx) % MIN_TAPE_SIZE;
 				break;
 
-			case bf::opt::InstructionType::SubPtr:
+			case opt::InstructionType::SubPtr:
 				tape_idx = (tape_idx - instruction.data) % MIN_TAPE_SIZE;
 				break;
 
-			case bf::opt::InstructionType::AddVal:
+			case opt::InstructionType::AddVal:
 				tape_ptr[tape_idx] += instruction.data;
 				break;
 
-			case bf::opt::InstructionType::SubVal:
+			case opt::InstructionType::SubVal:
 				tape_ptr[tape_idx] -= instruction.data;
 				break;
 
-			case bf::opt::InstructionType::Print:
+			case opt::InstructionType::Print:
 				bstdout << tape_ptr[tape_idx];
 				break;
 
-			case bf::opt::InstructionType::Read:
+			case opt::InstructionType::Read:
 				bstdin >> tape_ptr[tape_idx];
 				break;
 
-			case bf::opt::InstructionType::BeginLoop:
+			case opt::InstructionType::BeginLoop:
 			{
 				if (tape_ptr[tape_idx]) {
 					loop_start_idx.push(read_idx);
@@ -214,10 +216,10 @@ namespace bf {
 
 						skip_instruction = instructions[read_idx];
 
-						if (skip_instruction.type == bf::opt::InstructionType::EndLoop) {
+						if (skip_instruction.type == opt::InstructionType::EndLoop) {
 							loop_depth--;
 						}
-						else if (skip_instruction.type == bf::opt::InstructionType::BeginLoop) {
+						else if (skip_instruction.type == opt::InstructionType::BeginLoop) {
 							loop_depth++;
 						}
 					} while (loop_depth != 0);
@@ -225,7 +227,7 @@ namespace bf {
 			}
 			break;
 
-			case bf::opt::InstructionType::EndLoop:
+			case opt::InstructionType::EndLoop:
 				// We increment the read idx after this line, so I have to decrement it here to get correct results
 				read_idx = loop_start_idx.top() - 1;
 				loop_start_idx.pop();
@@ -236,6 +238,10 @@ namespace bf {
 		}
 
 		return true;
+	}
+
+	bool is_valid(const char token) {
+		return token == '<' || token == '>' || token == '+' || token == '-' || token == '[' || token == ']' || token == ',' || token == '.';
 	}
 
 	void print_help() {
@@ -291,7 +297,7 @@ int main(int argc, char** argv) {
 
 		// TODO: Use loops as the boundaries of the token chunks for better instruction cache performance
 
-		const std::string tokens = [&] {
+		std::string tokens = [&] {
 			if (token_stream->good()) {
 				std::string _tokens;
 
@@ -302,9 +308,10 @@ int main(int argc, char** argv) {
 				_tokens.assign((std::istreambuf_iterator<char>(*token_stream)), std::istreambuf_iterator<char>());
 
 				return _tokens;
-			} else {
+			}
+			else {
 				std::cerr << "Could not open Brainfuck file " << argv[1] << "\n";
-				
+
 				return std::string{};
 			}
 		}();
@@ -313,8 +320,10 @@ int main(int argc, char** argv) {
 			if (optimize) {
 				std::vector<bf::opt::Instruction> instructions;
 				instructions.reserve(tokens.size());
-				
-				std::transform(tokens.begin(), tokens.end(), instructions.begin(), bf::opt::parse_token);
+
+				// I'd like a proper monad that isn't stupidly verbose but at least there's something?
+				const auto& remove_itr = std::remove_if(tokens.begin(), tokens.end(), [](const auto token) { return !bf::is_valid(token); });
+				std::transform(tokens.begin(), remove_itr, std::back_inserter(instructions), bf::opt::parse_token);
 
 				return bf::interpret(instructions, tape_size, std::cin, std::cout);
 			}
