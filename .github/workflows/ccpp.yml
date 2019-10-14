@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: depends
-      run: apt install premake5
+      run: sudo apt install premake5
     - name: configure
       run: premake5 gmake2
     - name: make
