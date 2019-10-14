@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <vector>
 
 namespace bf::opt {
 	enum class InstructionType : uint8_t {
@@ -75,4 +76,6 @@ namespace bf::opt {
 			};
 		}
 	}
+
+	std::vector<Instruction> optimize_instructions(const std::vector<Instruction>& instructions);
 }

@@ -94,7 +94,7 @@ namespace bf {
 			// ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
 			switch (token) {  // NOLINT(hicpp-multiway-paths-covered)
 			case '>':
-				tape_idx = static_cast<uint64_t>(1 + tape_idx) % MIN_TAPE_SIZE;
+				tape_idx = static_cast<uint64_t>(tape_idx + 1) % MIN_TAPE_SIZE;
 				break;
 
 			case '<':
@@ -271,7 +271,7 @@ int main(int argc, char** argv) {
 		const auto tape_size = [&]() -> uint64_t {
 			if (input.cmd_option_exists("-t")) {
 				const auto& tape_size_str = input.get_cmd_option("-t");
-				return std::stoi(tape_size_str);
+				return std::stol(tape_size_str);
 			}
 			else {
 				return bf::MIN_TAPE_SIZE;
