@@ -271,7 +271,7 @@ int main(int argc, char** argv) {
 		const auto tape_size = [&]() -> uint64_t {
 			if (input.cmd_option_exists("-t")) {
 				const auto& tape_size_str = input.get_cmd_option("-t");
-				return std::stol(tape_size_str);
+				return std::stoll(tape_size_str);
 			}
 			else {
 				return bf::MIN_TAPE_SIZE;
