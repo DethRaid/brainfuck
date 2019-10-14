@@ -37,9 +37,11 @@ namespace bf::opt {
 
 				PASSTHROUGH_CASE(InstructionType::Print);
 				PASSTHROUGH_CASE(InstructionType::Read);
-				PASSTHROUGH_CASE(InstructionType::BeginLoop);
 				PASSTHROUGH_CASE(InstructionType::EndLoop);
 
+			case InstructionType::BeginLoop:
+				break;
+				
 				PASSTHROUGH_CASE(InstructionType::InstructionCount);
 
 			default:;
