@@ -6,19 +6,24 @@
 
 namespace bf::opt {
 	enum class InstructionType : uint8_t {
-		AddPtr,
-		SubPtr,
-		AddVal,
-		SubVal,
-		Print,
-		Read,
-		BeginLoop,
-		EndLoop,
+		// Basic Brainfuck instructions
+		AddPtr,		// data is the number to add 
+		AddVal,		// data is the number to add
+		Print,		// data ignored
+		Read,		// data ignored
+		BeginLoop,	// data ignored
+		EndLoop,	// data ignored
+
+		// Optimized instructions
+		MovePointerToZeroValue,
+		AddNearbyVal,
+		SubNearbyVal,
+		
 		InstructionCount,
 	};
 
 	struct Instruction {
-		uint8_t data = 0;
+		int8_t data = 0;
 		InstructionType type = InstructionType::InstructionCount;
 	};
 
@@ -26,7 +31,7 @@ namespace bf::opt {
 
 	inline Instruction parse_token(const char token) {
 		// ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
-		switch (token) {  // NOLINT(hicpp-multiway-paths-covered)
+		switch (token) {
 		case '>':
 			return Instruction{
 				1,
@@ -35,8 +40,8 @@ namespace bf::opt {
 
 		case '<':
 			return Instruction{
-				1,
-				InstructionType::SubPtr
+				-1,
+				InstructionType::AddPtr
 			};
 
 		case '+':
@@ -47,8 +52,8 @@ namespace bf::opt {
 
 		case '-':
 			return Instruction{
-				1,
-				InstructionType::SubVal
+				-1,
+				InstructionType::AddVal
 			};
 
 		case '.':

@@ -176,19 +176,11 @@ namespace bf {
 			// ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
 			switch (instruction.type) {  // NOLINT(hicpp-multiway-paths-covered)
 			case opt::InstructionType::AddPtr:
-				tape_idx = static_cast<uint64_t>(instruction.data + tape_idx) % MIN_TAPE_SIZE;
-				break;
-
-			case opt::InstructionType::SubPtr:
-				tape_idx = (tape_idx - instruction.data) % MIN_TAPE_SIZE;
+				tape_idx = static_cast<uint64_t>(int64_t(instruction.data) + tape_idx) % MIN_TAPE_SIZE;
 				break;
 
 			case opt::InstructionType::AddVal:
 				tape_ptr[tape_idx] += instruction.data;
-				break;
-
-			case opt::InstructionType::SubVal:
-				tape_ptr[tape_idx] -= instruction.data;
 				break;
 
 			case opt::InstructionType::Print:
@@ -200,7 +192,6 @@ namespace bf {
 				break;
 
 			case opt::InstructionType::BeginLoop:
-			{
 				if (tape_ptr[tape_idx]) {
 					loop_start_idx.push(read_idx);
 
@@ -224,13 +215,18 @@ namespace bf {
 						}
 					} while (loop_depth != 0);
 				}
-			}
-			break;
+				break;
 
 			case opt::InstructionType::EndLoop:
 				// We increment the read idx after this line, so I have to decrement it here to get correct results
 				read_idx = loop_start_idx.top() - 1;
 				loop_start_idx.pop();
+				break;
+
+			case opt::InstructionType::MovePointerToZeroValue:
+				while (tape_ptr[tape_idx]) {
+					tape_idx += instruction.data;
+				}
 				break;
 			}
 
@@ -269,10 +265,10 @@ int main(int argc, char** argv) {
 		const InputParser input(argc, argv);
 
 		const auto tape_size = [&]() -> uint64_t {
-			if (input.cmd_option_exists("-t")) {				
+			if (input.cmd_option_exists("-t")) {
 				const auto& tape_size_str = input.get_cmd_option("-t");
 
-				if(!tape_size_str.empty() && std::isdigit(tape_size_str[0])) {
+				if (!tape_size_str.empty() && std::isdigit(tape_size_str[0])) {
 					return std::stoll(tape_size_str);
 				}
 				else {
